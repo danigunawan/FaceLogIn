@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Questions</title>
+  <script src="../static/js/jquery-3.4.1.min.js"></script>
+  <script src="../static/js/bootstrap-4.4.1.min.js"></script>
+  <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+  <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+  <link href="../static/css/questions.css" rel="stylesheet">
+  <link href="../static/images/favicon.ico" rel="icon" type="image/x-icon" />
+
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/main.css') }}">
+  <link href='../static/css/font_open_sans.css' rel='stylesheet' type='text/css'>
+  <link href='../static/css/font_pt_sans_narrow.css' rel='stylesheet' type='text/css'>
+</head>
+
+<body>
+  <script>
+    var pagination = 1;
+    var total_papers = {{ question_papers.question| length}};
+    $(document).ready(function () {
+      $("#x" + pagination).show();
+    });
+
+    $(function () {
+      var loading = $('#loadbar').hide();
+      $(document)
+        .ajaxStart(function () {
+          loading.show();
+        }).ajaxStop(function () {
+          loading.hide();
+        });
+
+      $("label.btn").on('click', function () {
+        var choice = $(this).find('input:radio').val();
+        $(this).siblings().css({ 'background-color': '#428bca' });
+        $(this).css({ 'background-color': 'green' });
+      });
+    });
+
+    function submitButton() {
+      event.preventDefault();
+      let ques_divs = $("#x" + pagination).children('.modal-content').length
+      let ques_checked = x = $('#x' + pagination + ' input:radio:checked').length
+      if (ques_checked === ques_divs) {
+        data = {}
+        for (let i = 1; i <= pagination; i++) {
+          let disease = $('#x' + i).children(".title")[0].textContent;
+          let system = $('#x' + i).children(".system")[0].textContent;
+          let radio_selected = $('#x' + i + ' input:radio:checked')
+          let radio_count = $('#x' + i + ' input:radio:checked').length
+
+          let sum = 0;
+          for (let j = 0; j < radio_count; j++) {
+            sum = sum + radio_selected[j].value;
+          }
+          data[system + ':' + disease] = sum;
+        }
+        $('#xsubmit').val(JSON.stringify(data));
+        $('#xform').submit();
+
+      }
+      else {
+        $('#smallModal').modal();
+      }
+    }
+
+    function nextButton() {
+      let ques_divs = $("#x" + pagination).children('.modal-content').length
+      let ques_checked = x = $('#x' + pagination + ' input:radio:checked').length
+      if (ques_checked === ques_divs) {
+        $("#x" + pagination).hide();
+        pagination = pagination + 1;
+        $("#x" + pagination).show();
+        $("html, body").animate({ scrollTop: 0 }, "slow");
+        if (pagination > 1) {
+          $(".previous").show();
+        }
+        if (pagination === total_papers) {
+          $(".next").hide();
+          $(".submit").show();
+        }
+      }
+      else {
+        $('#smallModal').modal();
+      }
+    }
+
+    function previousButton() {
+      $("#x" + pagination).hide();
+      pagination = pagination - 1;
+      $("#x" + pagination).show();
+      $("html, body").animate({ scrollTop: 0 }, "slow");
+      if (pagination === 1) {
+        $(".previous").hide();
+      }
+      if (pagination < total_papers) {
+        $(".submit").hide();
+        $(".next").show();
+      }
+    }
+
+  </script>
+    <header class="default-header" style="position: relative; margin-top: -9px;">
+      <nav class="navbar navbar-expand-lg navbar-light" style="margin-bottom: 0em;">
+          <div class="container">
+              <a class="navbar-brand" href="{{ url_for('index') }}">
+                  <img src="{{ url_for('static',filename='img/favicon.png') }}" alt="">
+              </a>
+              <!-- <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                  aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+              </button> -->
+
+              <div class="collapse navbar-collapse justify-content-end align-items-center" id="navbarSupportedContent">
+                  <ul class="navbar-nav" style="margin-top: 20px; float: right; font-family: 'PT Sans Narrow', sans-serif; font-size: 13px; font-weight: 600;">
+                      <li>
+                          <a href="{{ url_for('login') }}">Face Identification</a>
+                      </li>
+                      <li>
+                          <a href="" id="gotoQA">Question and Answer</a>
+                      </li>
+                      <li>
+                          <a href="#contact-us">contact us</a>
+                      </li>
+                  </ul>
+              </div>
+          </div>
+      </nav>
+  </header>
+  <div class="container-fluid bg-info">
+    <div class="modal-dialog" id="x1" style="width:45%;">
+      {% for ques in question_papers.question %}
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 style="line-height:1.7;"><span class="label label-warning qid">{{loop.index}}</span> {{ques}} </h3>
+        </div>
+        <div class="modal-body">
+          <div class="quiz" id="quiz" data-toggle="buttons">
+            {% for answer in question_papers.answer[loop.index - 1] %}
+            <label class="element-animation1 btn btn-lg btn-primary btn-block"><span class="btn-label"><i
+                  class="glyphicon glyphicon-chevron-right"></i></span> <input type="radio"
+                >{{answer}}</label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div style="display: flex;justify-content: center; padding-left: 20%; padding-right: 20%;">
+      <button onclick="previousButton()" class="element-animation1 btn-primary previous">Previous</button>
+      <button onclick="nextButton()" class="element-animation1 next btn-primary">Next</button>
+      <button onclick="submitButton()" class="element-animation1 submit">Submit</button>
+    </div>
+  </div>
+
+  <form id="xform" action="/visualize" method="POST">
+    <input id="xsubmit" type="hidden" name="data" value="0">
+  </form>
+
+  <div class="modal fade" style="height:300px" id="smallModal">
+    <div class="modal-dialog">
+      <div class="modal-content" style="height:150px;">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Error!</h4>
+        </div>
+        <div style="height:200px" class="modal-body">
+          <p>You have to answer all questions to go to the next page.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
